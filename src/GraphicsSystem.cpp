@@ -70,15 +70,19 @@ void GraphicsSystem::renderMeshComponent_(Mesh& comp) {
 	// - get a camera component using ECS.main_camera
 	// - replace hard coded matrix data below, with matrices of camera component
 	// - change camera position to send to u_cam_pos uniform
+	Camera& cam = ECS.getAllComponents<Camera>()[ECS.main_camera];
+	cam.update();
 
-	lm::vec3 cam_position(0.0f, 0.0f, 3.0f);
+	/*lm::vec3 cam_position= cam.position;
 	lm::vec3 cam_target(0.0f, 0.0f, 0.0f);
 	lm::vec3 cam_up(0.0f, 1.0f, 0.0f);
 	lm::mat4 view_matrix, projection_matrix, view_projection;
-	view_matrix.lookAt(cam_position, cam_target, cam_up);
+	view_matrix.lookAt(cam.position, cam.position+cam.forward, cam_up);
 	projection_matrix.perspective(60.0f*DEG2RAD, 1, 0.01f, 100.0f);
-	view_projection = projection_matrix * view_matrix;
+	view_projection = projection_matrix * view_matrix;*/
 
+
+	
     //model matrix
     lm::mat4 model_matrix = transform.getGlobalMatrix(ECS.getAllComponents<Transform>());
 
@@ -88,7 +92,7 @@ void GraphicsSystem::renderMeshComponent_(Mesh& comp) {
 	normal_matrix.transpose();
 
     //Model view projection matrix
-    lm::mat4 mvp_matrix = view_projection * model_matrix;
+    lm::mat4 mvp_matrix = cam.view_projection * model_matrix;
 
     //transform uniforms
     GLint u_mvp = glGetUniformLocation(current_program_, "u_mvp");
@@ -102,7 +106,7 @@ void GraphicsSystem::renderMeshComponent_(Mesh& comp) {
 
 	//TODO: 
     GLint u_cam_pos = glGetUniformLocation(current_program_, "u_cam_pos");
-    if (u_cam_pos != -1) glUniform3fv(u_cam_pos, 1, cam_position.value_); // ...3fv - is array of 3 floats
+    if (u_cam_pos != -1) glUniform3fv(u_cam_pos, 1, cam.position.value_); // ...3fv - is array of 3 floats
 
     //material uniforms
     GLint u_diffuse = glGetUniformLocation(current_program_, "u_diffuse");
@@ -125,18 +129,44 @@ void GraphicsSystem::renderMeshComponent_(Mesh& comp) {
 	// - look at fragment shader to understand new lighting code
 	// - modify light code to read light information from Light components in ECS
 
-	//tell shader how many lights there
-	GLint u_num_lights = glGetUniformLocation(current_program_, "u_num_lights"); //get/set uniform in shader
-	if (u_num_lights != -1) glUniform1i(u_num_lights, 1);
-	//position
-	std::string light_position_name = "lights[0].position"; // uniform name
-	GLint u_light_pos = glGetUniformLocation(current_program_, light_position_name.c_str()); //find it
-	if (u_light_pos != -1) glUniform3fv(u_light_pos, 1, lm::vec3(1000.0,0.0,1000.0).value_); // light position
-	//color
-	std::string light_color_name = "lights[0].color";
-	GLint u_light_col = glGetUniformLocation(current_program_, light_color_name.c_str());
-	if (u_light_col != -1) glUniform3fv(u_light_col, 1, lm::vec3(1.0, 1.0, 1.0).value_);
+	auto& all_lights = ECS.getAllComponents<Light>();
 
+	Transform& light_0_transform =
+		ECS.getComponentFromEntity<Transform>(all_lights[0].owner);
+	//std::cout << light_0_transform.position().x << light_0_transform.position().y << light_0_transform.position().z << "\n";
+	
+	
+		//tell shader how many lights there
+		GLint u_num_lights = glGetUniformLocation(current_program_, "u_num_lights"); //get/set uniform in shader
+		if (u_num_lights != -1) glUniform1i(u_num_lights, (int)all_lights.size());
+		//position
+		for (size_t i = 0; i < all_lights.size(); i++) {
+			//std::cout << std::to_string(i) << "\n";
+
+			std::string light_position_name = "lights["+ std::to_string(i) + "].position"; // uniform name
+			GLint u_light_pos = glGetUniformLocation(current_program_, light_position_name.c_str()); //find it
+			if (u_light_pos != -1) glUniform3fv(u_light_pos, 1, light_0_transform.position().value_); // light position
+			//color
+			std::string light_color_name = "lights[" + std::to_string(i) + "].color";
+			GLint u_light_col = glGetUniformLocation(current_program_, light_color_name.c_str());
+			if (u_light_col != -1) glUniform3fv(u_light_col, 1, all_lights[i].color.value_);
+
+		}
+
+	//-------------------------------------------------------------------------------------------------------------
+	////tell shader how many lights there
+	//GLint u_num_lights = glGetUniformLocation(current_program_, "u_num_lights"); //get/set uniform in shader
+	//if (u_num_lights != -1) glUniform1i(u_num_lights, 1);
+	////position
+	//
+	//std::string light_position_name = "lights[0].position"; // uniform name
+	//GLint u_light_pos = glGetUniformLocation(current_program_, light_position_name.c_str()); //find it
+	//if (u_light_pos != -1) glUniform3fv(u_light_pos, 1, lm::vec3(1000.0,0.0,1000.0).value_); // light position
+	////color
+	//std::string light_color_name = "lights[0].color";
+	//GLint u_light_col = glGetUniformLocation(current_program_, light_color_name.c_str());
+	//if (u_light_col != -1) glUniform3fv(u_light_col, 1, lm::vec3(1.0, 1.0, 1.0).value_);
+	//-------------------------------------------------------------------------------------------------------------
 
 
 
@@ -198,6 +228,7 @@ int GraphicsSystem::createGeometryFromFile(std::string filename) {
     
     //check for supported format
     std::string ext = filename.substr(filename.size() - 4, 4);
+	std::cout << ext << std::endl;
     if (ext == ".obj" || ext == ".OBJ")
     {
         //fill it with data from object

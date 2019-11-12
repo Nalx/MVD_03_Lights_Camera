@@ -1,6 +1,7 @@
 #include "Parsers.h"
 #include <fstream>
-
+#include <algorithm>
+#include <iostream>
 #include <unordered_map>
 
 //function that splits a string into an std::vector of strings
@@ -12,8 +13,183 @@ void split(std::string to_split, std::string delim, std::vector<std::string>& re
 bool Parsers::parseOBJ(std::string filename, std::vector<float>& vertices, std::vector<float>& uvs, std::vector<float>& normals, std::vector<unsigned int>& indices) {
 
     //obj parser goes here
-    
-    return false;
+
+	std::vector< GLfloat > position_buffer_data, texture_buffer_data, normal_buffer_data;
+	GLuint vertexIndex_data;
+	GLuint uvIndex_data;
+	GLuint normalIndex_data;
+
+	std::vector< lm::vec3>  unique_vertex;
+	std::vector< lm::vec2 >  unique_uvs;
+	std::vector< lm::vec3 >  unique_normals;
+	std::vector<float> out_vertices;
+	std::vector<float> out_uvs;
+	std::vector<float> out_normals;
+	std::string line;
+	std::unordered_map<std::string,int> umap;
+	int map_index = 0;
+
+	std::ifstream myfile("data/assets/"+filename);
+
+	if (myfile.is_open()) {
+		while (getline(myfile, line))
+		{
+
+			std::string text;
+			myfile >> text;
+
+			//std::cerr << text << std::endl;
+			if (text == "v") {
+				lm::vec3 vertex;
+				myfile >> vertex.x;
+				myfile >> vertex.y;
+				myfile >> vertex.z;
+				
+
+
+				unique_vertex.push_back(vertex);
+			std::cout << vertex.x << " " << vertex.y << " " << vertex.z << std::endl;
+			}
+			else if (text == "vt") {
+				lm::vec2 uv;
+				myfile >> uv.x;
+				myfile >> uv.y;
+
+				unique_uvs.push_back(uv);
+				std::cout << uv.x << " " << uv.y << " " << std::endl;
+			}
+			else if (text == "vn") {
+				lm::vec3 normal;
+				myfile >> normal.x;
+				myfile >> normal.y;
+				myfile >> normal.z;
+
+				unique_normals.push_back(normal);
+				std::cout << normal.x << " " << normal.y << " " << normal.z << std::endl;
+			}
+			else if (text == "f") {
+				std::string fx, fy, fz;
+				unsigned int vertexIndex[3], uvIndex[3], normalIndex[3];
+				myfile >> fx >> fy >> fz;
+				//Si el fx no existeix dins el umap creo un registre del valor amb un index a una posició més
+				//Si el fx existeix genero una posició més a l'array de index finals de valor int del umap i passo d'afegirlo al umap
+				if (umap.count(fx)==0){
+					umap[fx] = map_index;
+					indices.push_back(map_index);
+					map_index++;
+				}
+				else {
+					indices.push_back(umap.at(fx));
+				}
+				if (umap.count(fy) == 0) {
+					umap[fy] = map_index;
+					indices.push_back(map_index);
+					map_index++;
+				}
+				else {
+					indices.push_back(umap.at(fy));
+				}
+				if (umap.count(fz) == 0) {
+					umap[fz] = map_index;
+					indices.push_back(map_index);
+					map_index++;
+				}
+				else {
+					indices.push_back(umap.at(fz));	
+				}
+
+				fx.erase(std::remove(fx.begin(), fx.end(), '/'), fx.end());
+				fy.erase(std::remove(fy.begin(), fy.end(), '/'), fy.end());
+				fz.erase(std::remove(fz.begin(), fz.end(), '/'), fz.end());
+
+				int  fa = atoi(fx.c_str());
+				int  fb = atoi(fy.c_str());
+				int  fc = atoi(fz.c_str());
+				
+				//Dividing the string by vertex-uvs-normal
+				vertexIndex[0] = floor((fa / 100) % 10);
+				uvIndex[0] = floor((fa / 10) % 10);
+				normalIndex[0] = floor(fa % 10);
+				vertexIndex[1] = floor((fb / 100) % 10);
+				uvIndex[1] = floor(fb / 10 % 10);
+				normalIndex[1] = floor(fb % 10);
+				vertexIndex[2] = floor((fc / 100) % 10);
+				uvIndex[2] = floor(fc / 10 % 10);
+				normalIndex[2] = floor(fc % 10);
+				//We have now stored all face information in 3 separate buffers
+				position_buffer_data.push_back(vertexIndex[0]);
+				position_buffer_data.push_back(vertexIndex[1]);
+				position_buffer_data.push_back(vertexIndex[2]);
+				texture_buffer_data.push_back(uvIndex[0]);
+				texture_buffer_data.push_back(uvIndex[1]);
+				texture_buffer_data.push_back(uvIndex[2]);
+				normal_buffer_data.push_back(normalIndex[0]);
+				normal_buffer_data.push_back(normalIndex[1]);
+				normal_buffer_data.push_back(normalIndex[2]);
+				std::cout << vertexIndex[0] << uvIndex[0] << normalIndex[0] << std::endl;
+				std::cout << vertexIndex[1] << uvIndex[1] << normalIndex[1] << std::endl;
+				std::cout << vertexIndex[2] << uvIndex[2] << normalIndex[2] << std::endl;
+			}
+		}
+		myfile.close();
+	}
+	else {
+		std::cerr << "Impossible to open the file !\n";
+		return 0;
+	}
+
+	//index buffer
+	for (unsigned int i = 0; i < position_buffer_data.size(); i++) {
+
+		vertexIndex_data = position_buffer_data[i];
+		uvIndex_data = texture_buffer_data[i];
+		normalIndex_data = normal_buffer_data[i];
+
+		// Get the attributes thanks to each index
+		lm::vec3 vertex = unique_vertex[vertexIndex_data - 1];
+		lm::vec2 uv = unique_uvs[uvIndex_data - 1];
+		lm::vec3 normal = unique_normals[normalIndex_data - 1];
+
+		out_vertices.push_back(vertex.x);
+		out_vertices.push_back(vertex.y);
+		out_vertices.push_back(vertex.z);
+		out_uvs.push_back(uv.x);
+		out_uvs.push_back(uv.y);
+		out_normals.push_back(normal.x);
+		out_normals.push_back(normal.y);
+		out_normals.push_back(normal.z);
+		 
+	}
+	vertices = out_vertices;
+	uvs = out_uvs;
+	normals = out_normals;
+
+	std::ofstream file;
+	file.open("OBJ_DEBUG.txt");
+	for (unsigned int i = 0; i < vertices.size()-2; i++) {
+		std::cout << "VERTEX " << i << ":  " << vertices[i]  << std::endl;
+		std::string text = "VERTEX :" + std::to_string(vertices[i]);
+			file << text  << '\n';
+	}
+	for (unsigned int i = 0; i < uvs.size(); i++) {
+		std::cout << "UVs " << i << ":" << uvs[i] << std::endl;
+		std::string text = "UVs :" +std::to_string((int)uvs[i]);
+		file << text << '\n';
+	}
+	for (unsigned int i = 0; i < normals.size(); i++) {
+		std::cout << "Normals " << i << ":" << normals[i] << std::endl;
+		std::string text = "Normals :" + std::to_string(normals[i]);
+		file << text << '\n';
+	}
+	for (unsigned int i = 0; i < indices.size(); i++) {
+		std::cout << "Indices " << i << ":" << indices[i] << std::endl;
+		std::string text = "Indices :" + std::to_string(indices[i]);
+		file << text << '\n';
+	}
+	
+	"Writing this to a file.\n";
+	myfile.close();
+    return true;
 }
 
 // load uncompressed RGB targa file into an OpenGL texture
