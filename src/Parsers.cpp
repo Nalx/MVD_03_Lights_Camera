@@ -4,8 +4,9 @@
 #include <iostream>
 #include <unordered_map>
 
-//function that splits a string into an std::vector of strings
+//function that splits a string into an std::vector of (strings)
 void split(std::string to_split, std::string delim, std::vector<std::string>& result) {
+	
 
 }
 
@@ -22,6 +23,7 @@ bool Parsers::parseOBJ(std::string filename, std::vector<float>& vertices, std::
 	std::vector< lm::vec3>  unique_vertex;
 	std::vector< lm::vec2 >  unique_uvs;
 	std::vector< lm::vec3 >  unique_normals;
+
 	std::vector<float> out_vertices;
 	std::vector<float> out_uvs;
 	std::vector<float> out_normals;
@@ -69,13 +71,15 @@ bool Parsers::parseOBJ(std::string filename, std::vector<float>& vertices, std::
 			}
 			else if (text == "f") {
 				std::string fx, fy, fz;
-				unsigned int vertexIndex[3], uvIndex[3], normalIndex[3];
+				GLuint  vertexIndex[3], uvIndex[3], normalIndex[3];
+				
 				myfile >> fx >> fy >> fz;
 				//Si el fx no existeix dins el umap creo un registre del valor amb un index a una posició més
 				//Si el fx existeix genero una posició més a l'array de index finals de valor int del umap i passo d'afegirlo al umap
 				if (umap.count(fx)==0){
 					umap[fx] = map_index;
 					indices.push_back(map_index);
+					
 					map_index++;
 				}
 				else {
@@ -83,6 +87,7 @@ bool Parsers::parseOBJ(std::string filename, std::vector<float>& vertices, std::
 				}
 				if (umap.count(fy) == 0) {
 					umap[fy] = map_index;
+					
 					indices.push_back(map_index);
 					map_index++;
 				}
@@ -91,18 +96,20 @@ bool Parsers::parseOBJ(std::string filename, std::vector<float>& vertices, std::
 				}
 				if (umap.count(fz) == 0) {
 					umap[fz] = map_index;
+					
 					indices.push_back(map_index);
 					map_index++;
 				}
 				else {
 					indices.push_back(umap.at(fz));	
 				}
-
+				
+				
 				fx.erase(std::remove(fx.begin(), fx.end(), '/'), fx.end());
 				fy.erase(std::remove(fy.begin(), fy.end(), '/'), fy.end());
 				fz.erase(std::remove(fz.begin(), fz.end(), '/'), fz.end());
 
-				int  fa = atoi(fx.c_str());
+				int fa = atoi(fx.c_str());
 				int  fb = atoi(fy.c_str());
 				int  fc = atoi(fz.c_str());
 				
@@ -137,27 +144,47 @@ bool Parsers::parseOBJ(std::string filename, std::vector<float>& vertices, std::
 		std::cerr << "Impossible to open the file !\n";
 		return 0;
 	}
-
+	unsigned n = umap.bucket_count();
+	for (unsigned i = 0; i < n; i++) {
+		std::cout << "Bucket " << i << " contains: ";
+		for (auto it = umap.begin(i); it != umap.end(i); it++)
+			std::cout << "(" << it->first << ", "
+			<< it->second << ")  ";
+		std::cout << " \n"; 
+	}
+	
 	//index buffer
-	for (unsigned int i = 0; i < position_buffer_data.size(); i++) {
+	for (unsigned int i = 0; i < indices.size(); i++) {
+		std::string result;
+		auto it = umap.begin();
+		while (it != umap.end())
+		{
+			if (it->second == i)
+			{
+				result = it->first;
+				//std::cout << "Contingut de UMAP en i: " << it->first << std::endl;
+				
+			}
+			it++;
+		}
+		//vertexIndex_data = position_buffer_data[i];
+		//uvIndex_data = texture_buffer_data[i];
+		//normalIndex_data = normal_buffer_data[i];
 
-		vertexIndex_data = position_buffer_data[i];
-		uvIndex_data = texture_buffer_data[i];
-		normalIndex_data = normal_buffer_data[i];
-
-		// Get the attributes thanks to each index
-		lm::vec3 vertex = unique_vertex[vertexIndex_data - 1];
-		lm::vec2 uv = unique_uvs[uvIndex_data - 1];
-		lm::vec3 normal = unique_normals[normalIndex_data - 1];
-
-		out_vertices.push_back(vertex.x);
+		////// Get the attributes thanks to each index
+		//lm::vec3 vertex = unique_vertex[vertexIndex_data - 1];
+		//lm::vec2 uv = unique_uvs[uvIndex_data - 1];
+		//lm::vec3 normal = unique_normals[normalIndex_data - 1];
+		
+		
+		/*out_vertices.push_back(vertex.x);
 		out_vertices.push_back(vertex.y);
 		out_vertices.push_back(vertex.z);
 		out_uvs.push_back(uv.x);
 		out_uvs.push_back(uv.y);
 		out_normals.push_back(normal.x);
 		out_normals.push_back(normal.y);
-		out_normals.push_back(normal.z);
+		out_normals.push_back(normal.z);*/
 		 
 	}
 	vertices = out_vertices;
