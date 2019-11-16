@@ -52,8 +52,8 @@ void Game::init() {
 	cmc.geometry = cube_geom_id;
 	cmc.material = default_mat_id;
 	ECS.getComponentFromEntity<Transform>(ent_cube).translate(0.0, -0.5, 0.0);
-	//ECS.getComponentFromEntity<Transform>(ent_cube).rotateLocal(-0.7f, lm::vec3(0, 1, 0));
-	ECS.getComponentFromEntity<Transform>(ent_cube).rotateLocal(+90.0f /180, lm::vec3(1, 1, 0));
+	ECS.getComponentFromEntity<Transform>(ent_cube).rotateLocal(-0.3f, lm::vec3(1, 1, 0));
+	//ECS.getComponentFromEntity<Transform>(ent_cube).rotateLocal(+90.0f /180, lm::vec3(1, 1, 0));
 
 
 

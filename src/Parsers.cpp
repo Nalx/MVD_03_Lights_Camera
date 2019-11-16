@@ -2,7 +2,7 @@
 #include <fstream>
 #include <algorithm>
 #include <iostream>
-#include <unordered_map>
+#include <map>
 
 //function that splits a string into an std::vector of (strings)
 void split(std::string to_split, std::string delim, std::vector<std::string>& result) {
@@ -24,15 +24,16 @@ bool Parsers::parseOBJ(std::string filename, std::vector<float>& vertices, std::
 	std::vector< lm::vec2 >  unique_uvs;
 	std::vector< lm::vec3 >  unique_normals;
 
+	std::vector<std::string> temp_face_index;
 	std::vector<float> out_vertices;
 	std::vector<float> out_uvs;
 	std::vector<float> out_normals;
 	std::string line;
-	std::unordered_map<std::string,int> umap;
+	std::map<std::string, int> umap;
 	int map_index = 0;
 
 	std::ifstream myfile("data/assets/"+filename);
-
+	
 	if (myfile.is_open()) {
 		while (getline(myfile, line))
 		{
@@ -72,70 +73,94 @@ bool Parsers::parseOBJ(std::string filename, std::vector<float>& vertices, std::
 			else if (text == "f") {
 				std::string fx, fy, fz;
 				GLuint  vertexIndex[3], uvIndex[3], normalIndex[3];
-				
+				lm::vec3 vertex;
+				lm::vec2 uv;
+				lm::vec3 normal;
 				myfile >> fx >> fy >> fz;
+				std::string result;
 				//Si el fx no existeix dins el umap creo un registre del valor amb un index a una posició més
 				//Si el fx existeix genero una posició més a l'array de index finals de valor int del umap i passo d'afegirlo al umap
 				if (umap.count(fx)==0){
-					umap[fx] = map_index;
+					std::cout << "UMAP INDEX: " << fx << std::endl;
+					std::pair<std::string, int> faceIndex(fx, map_index);
+					temp_face_index.push_back(fx);
+					umap.insert(faceIndex);
 					indices.push_back(map_index);
-					
+					fx.erase(std::remove(fx.begin(), fx.end(), '/'), fx.end());
+					int face = atoi(fx.c_str());
+					int vert = floor((face / 100) % 10);
+					int u_v = floor((face / 10) % 10);
+					int norlm = floor((face % 10));
+					vertex= unique_vertex[vert - 1];
+					uv= unique_uvs[u_v - 1];
+					normal= unique_normals[norlm - 1];
+					out_vertices.push_back(vertex.x);
+					out_vertices.push_back(vertex.y);
+					out_vertices.push_back(vertex.z);
+					out_uvs.push_back(uv.x);
+					out_uvs.push_back(uv.y);
+					out_normals.push_back(normal.x);
+					out_normals.push_back(normal.y);
+					out_normals.push_back(normal.z);
 					map_index++;
 				}
 				else {
 					indices.push_back(umap.at(fx));
 				}
 				if (umap.count(fy) == 0) {
-					umap[fy] = map_index;
-					
+					temp_face_index.push_back(fy);
+					std::cout << "UMAP INDEX: " << fy << std::endl;
+					std::pair<std::string, int> faceIndex(fy, map_index);
+					umap.insert(faceIndex);
 					indices.push_back(map_index);
+					fy.erase(std::remove(fy.begin(), fy.end(), '/'), fy.end());
+					int face = atoi(fy.c_str());
+					int vert = floor((face / 100) % 10);
+					int u_v = floor((face / 10) % 10);
+					int norlm = floor((face % 10));
+					vertex = unique_vertex[vert - 1];
+					uv = unique_uvs[u_v - 1];
+					normal = unique_normals[norlm - 1];
+					out_vertices.push_back(vertex.x);
+					out_vertices.push_back(vertex.y);
+					out_vertices.push_back(vertex.z);
+					out_uvs.push_back(uv.x);
+					out_uvs.push_back(uv.y);
+					out_normals.push_back(normal.x);
+					out_normals.push_back(normal.y);
+					out_normals.push_back(normal.z);
 					map_index++;
 				}
 				else {
 					indices.push_back(umap.at(fy));
 				}
 				if (umap.count(fz) == 0) {
-					umap[fz] = map_index;
-					
+					temp_face_index.push_back(fz);
+					std::cout << "UMAP INDEX: " << fz << std::endl;
+					std::pair<std::string, int> faceIndex(fz, map_index);
+					umap.insert(faceIndex);
 					indices.push_back(map_index);
+					fz.erase(std::remove(fz.begin(), fz.end(), '/'), fz.end());
+					int face = atoi(fz.c_str());
+					int vert = floor((face / 100) % 10);
+					int u_v = floor((face / 10) % 10);
+					int norlm = floor((face % 10));
+					vertex = unique_vertex[vert - 1];
+					uv = unique_uvs[u_v - 1];
+					normal = unique_normals[norlm - 1];
+					out_vertices.push_back(vertex.x);
+					out_vertices.push_back(vertex.y);
+					out_vertices.push_back(vertex.z);
+					out_uvs.push_back(uv.x);
+					out_uvs.push_back(uv.y);
+					out_normals.push_back(normal.x);
+					out_normals.push_back(normal.y);
+					out_normals.push_back(normal.z);
 					map_index++;
 				}
 				else {
 					indices.push_back(umap.at(fz));	
 				}
-				
-				
-				fx.erase(std::remove(fx.begin(), fx.end(), '/'), fx.end());
-				fy.erase(std::remove(fy.begin(), fy.end(), '/'), fy.end());
-				fz.erase(std::remove(fz.begin(), fz.end(), '/'), fz.end());
-
-				int fa = atoi(fx.c_str());
-				int  fb = atoi(fy.c_str());
-				int  fc = atoi(fz.c_str());
-				
-				//Dividing the string by vertex-uvs-normal
-				vertexIndex[0] = floor((fa / 100) % 10);
-				uvIndex[0] = floor((fa / 10) % 10);
-				normalIndex[0] = floor(fa % 10);
-				vertexIndex[1] = floor((fb / 100) % 10);
-				uvIndex[1] = floor(fb / 10 % 10);
-				normalIndex[1] = floor(fb % 10);
-				vertexIndex[2] = floor((fc / 100) % 10);
-				uvIndex[2] = floor(fc / 10 % 10);
-				normalIndex[2] = floor(fc % 10);
-				//We have now stored all face information in 3 separate buffers
-				position_buffer_data.push_back(vertexIndex[0]);
-				position_buffer_data.push_back(vertexIndex[1]);
-				position_buffer_data.push_back(vertexIndex[2]);
-				texture_buffer_data.push_back(uvIndex[0]);
-				texture_buffer_data.push_back(uvIndex[1]);
-				texture_buffer_data.push_back(uvIndex[2]);
-				normal_buffer_data.push_back(normalIndex[0]);
-				normal_buffer_data.push_back(normalIndex[1]);
-				normal_buffer_data.push_back(normalIndex[2]);
-				std::cout << vertexIndex[0] << uvIndex[0] << normalIndex[0] << std::endl;
-				std::cout << vertexIndex[1] << uvIndex[1] << normalIndex[1] << std::endl;
-				std::cout << vertexIndex[2] << uvIndex[2] << normalIndex[2] << std::endl;
 			}
 		}
 		myfile.close();
@@ -144,53 +169,12 @@ bool Parsers::parseOBJ(std::string filename, std::vector<float>& vertices, std::
 		std::cerr << "Impossible to open the file !\n";
 		return 0;
 	}
-	unsigned n = umap.bucket_count();
-	for (unsigned i = 0; i < n; i++) {
-		std::cout << "Bucket " << i << " contains: ";
-		for (auto it = umap.begin(i); it != umap.end(i); it++)
-			std::cout << "(" << it->first << ", "
-			<< it->second << ")  ";
-		std::cout << " \n"; 
-	}
-	
 	//index buffer
-	for (unsigned int i = 0; i < indices.size(); i++) {
-		std::string result;
-		auto it = umap.begin();
-		while (it != umap.end())
-		{
-			if (it->second == i)
-			{
-				result = it->first;
-				//std::cout << "Contingut de UMAP en i: " << it->first << std::endl;
-				
-			}
-			it++;
-		}
-		//vertexIndex_data = position_buffer_data[i];
-		//uvIndex_data = texture_buffer_data[i];
-		//normalIndex_data = normal_buffer_data[i];
-
-		////// Get the attributes thanks to each index
-		//lm::vec3 vertex = unique_vertex[vertexIndex_data - 1];
-		//lm::vec2 uv = unique_uvs[uvIndex_data - 1];
-		//lm::vec3 normal = unique_normals[normalIndex_data - 1];
-		
-		
-		/*out_vertices.push_back(vertex.x);
-		out_vertices.push_back(vertex.y);
-		out_vertices.push_back(vertex.z);
-		out_uvs.push_back(uv.x);
-		out_uvs.push_back(uv.y);
-		out_normals.push_back(normal.x);
-		out_normals.push_back(normal.y);
-		out_normals.push_back(normal.z);*/
-		 
-	}
+	
 	vertices = out_vertices;
 	uvs = out_uvs;
 	normals = out_normals;
-
+	//We export a .txt file with all the obj data parsed:
 	std::ofstream file;
 	file.open("OBJ_DEBUG.txt");
 	for (unsigned int i = 0; i < vertices.size()-2; i++) {
@@ -213,7 +197,6 @@ bool Parsers::parseOBJ(std::string filename, std::vector<float>& vertices, std::
 		std::string text = "Indices :" + std::to_string(indices[i]);
 		file << text << '\n';
 	}
-	
 	"Writing this to a file.\n";
 	myfile.close();
     return true;
