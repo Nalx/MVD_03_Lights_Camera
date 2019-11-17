@@ -12,155 +12,40 @@ void split(std::string to_split, std::string delim, std::vector<std::string>& re
 
 //parses a wavefront object into passed arrays
 bool Parsers::parseOBJ(std::string filename, std::vector<float>& vertices, std::vector<float>& uvs, std::vector<float>& normals, std::vector<unsigned int>& indices) {
-
-    //obj parser goes here
-
-	std::vector< GLfloat > position_buffer_data, texture_buffer_data, normal_buffer_data;
-	GLuint vertexIndex_data;
-	GLuint uvIndex_data;
-	GLuint normalIndex_data;
-
-	std::vector< lm::vec3>  unique_vertex;
+	std::vector< lm::vec3>   unique_vertex, unique_normals;
 	std::vector< lm::vec2 >  unique_uvs;
-	std::vector< lm::vec3 >  unique_normals;
-
-	std::vector<std::string> temp_face_index;
-	std::vector<float> out_vertices;
-	std::vector<float> out_uvs;
-	std::vector<float> out_normals;
+	std::vector<std::string> unique_faces, temp_face_index;
 	std::string line;
-	std::map<std::string, int> umap;
+	std::map<std::string, int> map;
 	int map_index = 0;
-
 	std::ifstream myfile("data/assets/"+filename);
-	
+	//Let’s read this file until the end :
 	if (myfile.is_open()) {
 		while (getline(myfile, line))
 		{
-
 			std::string text;
+			// read the first word of the line
 			myfile >> text;
-
-			//std::cerr << text << std::endl;
-			if (text == "v") {
+			if (text == "v") { //Let’s deal with the vertices first 
 				lm::vec3 vertex;
-				myfile >> vertex.x;
-				myfile >> vertex.y;
-				myfile >> vertex.z;
-				
-
-
+				myfile >> vertex.x >> vertex.y >> vertex.z;
 				unique_vertex.push_back(vertex);
-			std::cout << vertex.x << " " << vertex.y << " " << vertex.z << std::endl;
 			}
-			else if (text == "vt") {
+			else if (text == "vt") { //same thing for the uv's
 				lm::vec2 uv;
-				myfile >> uv.x;
-				myfile >> uv.y;
-
+				myfile >> uv.x >> uv.y;
 				unique_uvs.push_back(uv);
-				std::cout << uv.x << " " << uv.y << " " << std::endl;
 			}
-			else if (text == "vn") {
+			else if (text == "vn") { //same thing for the normals
 				lm::vec3 normal;
-				myfile >> normal.x;
-				myfile >> normal.y;
-				myfile >> normal.z;
-
+				myfile >> normal.x >> normal.y >> normal.z;
 				unique_normals.push_back(normal);
-				std::cout << normal.x << " " << normal.y << " " << normal.z << std::endl;
 			}
-			else if (text == "f") {
+			else if (text == "f") { //we use 3 strings for the faces 
 				std::string fx, fy, fz;
-				GLuint  vertexIndex[3], uvIndex[3], normalIndex[3];
-				lm::vec3 vertex;
-				lm::vec2 uv;
-				lm::vec3 normal;
 				myfile >> fx >> fy >> fz;
-				std::string result;
-				//Si el fx no existeix dins el umap creo un registre del valor amb un index a una posició més
-				//Si el fx existeix genero una posició més a l'array de index finals de valor int del umap i passo d'afegirlo al umap
-				if (umap.count(fx)==0){
-					std::cout << "UMAP INDEX: " << fx << std::endl;
-					std::pair<std::string, int> faceIndex(fx, map_index);
-					temp_face_index.push_back(fx);
-					umap.insert(faceIndex);
-					indices.push_back(map_index);
-					fx.erase(std::remove(fx.begin(), fx.end(), '/'), fx.end());
-					int face = atoi(fx.c_str());
-					int vert = floor((face / 100) % 10);
-					int u_v = floor((face / 10) % 10);
-					int norlm = floor((face % 10));
-					vertex= unique_vertex[vert - 1];
-					uv= unique_uvs[u_v - 1];
-					normal= unique_normals[norlm - 1];
-					out_vertices.push_back(vertex.x);
-					out_vertices.push_back(vertex.y);
-					out_vertices.push_back(vertex.z);
-					out_uvs.push_back(uv.x);
-					out_uvs.push_back(uv.y);
-					out_normals.push_back(normal.x);
-					out_normals.push_back(normal.y);
-					out_normals.push_back(normal.z);
-					map_index++;
-				}
-				else {
-					indices.push_back(umap.at(fx));
-				}
-				if (umap.count(fy) == 0) {
-					temp_face_index.push_back(fy);
-					std::cout << "UMAP INDEX: " << fy << std::endl;
-					std::pair<std::string, int> faceIndex(fy, map_index);
-					umap.insert(faceIndex);
-					indices.push_back(map_index);
-					fy.erase(std::remove(fy.begin(), fy.end(), '/'), fy.end());
-					int face = atoi(fy.c_str());
-					int vert = floor((face / 100) % 10);
-					int u_v = floor((face / 10) % 10);
-					int norlm = floor((face % 10));
-					vertex = unique_vertex[vert - 1];
-					uv = unique_uvs[u_v - 1];
-					normal = unique_normals[norlm - 1];
-					out_vertices.push_back(vertex.x);
-					out_vertices.push_back(vertex.y);
-					out_vertices.push_back(vertex.z);
-					out_uvs.push_back(uv.x);
-					out_uvs.push_back(uv.y);
-					out_normals.push_back(normal.x);
-					out_normals.push_back(normal.y);
-					out_normals.push_back(normal.z);
-					map_index++;
-				}
-				else {
-					indices.push_back(umap.at(fy));
-				}
-				if (umap.count(fz) == 0) {
-					temp_face_index.push_back(fz);
-					std::cout << "UMAP INDEX: " << fz << std::endl;
-					std::pair<std::string, int> faceIndex(fz, map_index);
-					umap.insert(faceIndex);
-					indices.push_back(map_index);
-					fz.erase(std::remove(fz.begin(), fz.end(), '/'), fz.end());
-					int face = atoi(fz.c_str());
-					int vert = floor((face / 100) % 10);
-					int u_v = floor((face / 10) % 10);
-					int norlm = floor((face % 10));
-					vertex = unique_vertex[vert - 1];
-					uv = unique_uvs[u_v - 1];
-					normal = unique_normals[norlm - 1];
-					out_vertices.push_back(vertex.x);
-					out_vertices.push_back(vertex.y);
-					out_vertices.push_back(vertex.z);
-					out_uvs.push_back(uv.x);
-					out_uvs.push_back(uv.y);
-					out_normals.push_back(normal.x);
-					out_normals.push_back(normal.y);
-					out_normals.push_back(normal.z);
-					map_index++;
-				}
-				else {
-					indices.push_back(umap.at(fz));	
-				}
+				std::vector<std::string> _face{fx,fy,fz};
+				unique_faces.insert(unique_faces.end(), std::begin(_face), std::end(_face));
 			}
 		}
 		myfile.close();
@@ -169,36 +54,39 @@ bool Parsers::parseOBJ(std::string filename, std::vector<float>& vertices, std::
 		std::cerr << "Impossible to open the file !\n";
 		return 0;
 	}
-	//index buffer
-	
-	vertices = out_vertices;
-	uvs = out_uvs;
-	normals = out_normals;
-	//We export a .txt file with all the obj data parsed:
-	std::ofstream file;
-	file.open("OBJ_DEBUG.txt");
-	for (unsigned int i = 0; i < vertices.size()-2; i++) {
-		std::cout << "VERTEX " << i << ":  " << vertices[i]  << std::endl;
-		std::string text = "VERTEX :" + std::to_string(vertices[i]);
-			file << text  << '\n';
+	//Processing the data:
+	for (int i = 0; i < unique_faces.size(); i++) {
+		lm::vec3 vertex, normal;
+		lm::vec2 uv;
+		std::string index = unique_faces.at(i);
+		int face, vert, u_v, norlm;
+		if (map.count(index) == 0) { //we only add the value if the array index is unique
+			std::pair<std::string, int> faceIndex(index, map_index);
+			temp_face_index.push_back(index);
+			map.insert(faceIndex); 
+			indices.push_back(map_index);
+			map_index++;
+			index.erase(std::remove(index.begin(), index.end(), '/'), index.end()); //get rid of "/"
+		    face = atoi(index.c_str()); //string to integer
+			//we've to get each value as separate int
+		    vert = floor((face / 100) % 10);
+		    u_v = floor((face / 10) % 10);
+		    norlm = floor((face % 10));
+			//we get the correct information according to the int indexes
+			vertex = unique_vertex[vert - 1];
+			uv = unique_uvs[u_v - 1];
+			normal = unique_normals[norlm - 1];
+			//giving the correct format to the data
+			std::vector<float> _vert{ vertex.x ,vertex.y ,vertex.z }, _uvs{ uv.x ,uv.y }, _nrlm{ normal.x ,normal.y ,normal.z };
+			vertices.insert(vertices.end(), std::begin(_vert), std::end(_vert));
+			uvs.insert(uvs.end(), std::begin(_uvs), std::end(_uvs));
+			normals.insert(normals.end(), std::begin(_nrlm), std::end(_nrlm));
+			
+		}
+		else {  //if the array index is not unique we should also add the value to indices array 
+			indices.push_back(map.at(index));
+		}
 	}
-	for (unsigned int i = 0; i < uvs.size(); i++) {
-		std::cout << "UVs " << i << ":" << uvs[i] << std::endl;
-		std::string text = "UVs :" +std::to_string((int)uvs[i]);
-		file << text << '\n';
-	}
-	for (unsigned int i = 0; i < normals.size(); i++) {
-		std::cout << "Normals " << i << ":" << normals[i] << std::endl;
-		std::string text = "Normals :" + std::to_string(normals[i]);
-		file << text << '\n';
-	}
-	for (unsigned int i = 0; i < indices.size(); i++) {
-		std::cout << "Indices " << i << ":" << indices[i] << std::endl;
-		std::string text = "Indices :" + std::to_string(indices[i]);
-		file << text << '\n';
-	}
-	"Writing this to a file.\n";
-	myfile.close();
     return true;
 }
 

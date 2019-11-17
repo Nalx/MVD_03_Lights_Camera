@@ -51,8 +51,8 @@ void Game::init() {
 	Mesh& cmc = ECS.createComponentForEntity<Mesh>(ent_cube);
 	cmc.geometry = cube_geom_id;
 	cmc.material = default_mat_id;
-	ECS.getComponentFromEntity<Transform>(ent_cube).translate(0.0, -0.5, 0.0);
-	ECS.getComponentFromEntity<Transform>(ent_cube).rotateLocal(-0.3f, lm::vec3(1, 1, 0));
+	ECS.getComponentFromEntity<Transform>(ent_cube).translate(0.0, -0.3, 0.0);
+	ECS.getComponentFromEntity<Transform>(ent_cube).rotateLocal(-0.9f, lm::vec3(1, 1, 1));
 	//ECS.getComponentFromEntity<Transform>(ent_cube).rotateLocal(+90.0f /180, lm::vec3(1, 1, 0));
 
 
@@ -71,13 +71,13 @@ void Game::init() {
 	// - set light component properties
 	int ent_light_1 = ECS.createEntity("Light 1");
 	Light& light_1_comp = ECS.createComponentForEntity<Light>(ent_light_1);
-	light_1_comp.color = lm::vec3(1.0f,0.0f,0.0f);
+	light_1_comp.color = lm::vec3(1.0f,1.0f,1.0f);
 	Transform& light_1_transform = ECS.getComponentFromEntity<Transform>(ent_light_1);
 	light_1_transform.translate(1000.0f,0.0f,1000.0f);
 
 	int ent_light_2 = ECS.createEntity("Light 2");
 	Light& light_2_comp = ECS.createComponentForEntity<Light>(ent_light_2);
-	light_2_comp.color = lm::vec3(0.0f, 0.0f, 1.0f);
+	light_2_comp.color = lm::vec3(1.0f, 1.0f, 1.0f);
 	Transform& light_2_transform = ECS.getComponentFromEntity<Transform>(ent_light_2);
 	light_2_transform.translate(1000.0f, 0.0f, 1000.0f);
 
