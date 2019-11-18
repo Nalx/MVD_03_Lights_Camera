@@ -3,31 +3,10 @@
 #include <algorithm>
 #include <iostream>
 #include <map>
-#include <sstream>
-#include <cstring>
-
 
 
 
 //function that splits a string into an std::vector of (strings)
-//void split2(std::string to_split, std::string delim, std::vector<std::string>& result) {
-//	// Skip delimiters at beginning.
-//	std::size_t  lastPos = to_split.find_first_not_of(delim, 0);
-//	// Find first "non-delimiter".
-//	std::size_t  pos = to_split.find_first_of(delim, lastPos);
-//	int delim_num = 0;
-//	while (std::string::npos != pos || std::string::npos != lastPos)
-//	{
-//		// Found a token, add it to the vector.
-//		result.push_back(to_split.substr(lastPos, pos - lastPos));
-//		delim_num++;
-//		// Skip delimiters.  Note the "not_of"
-//		lastPos = to_split.find_first_not_of(delim, pos);
-//		// Find next "non-delimiter"
-//		pos = to_split.find_first_of(delim, lastPos);
-//	}
-//	std::cout << result[0] << std::endl;
-//}
 void split(std::string to_split, char delim, std::vector<std::string>& result) {
 	std::replace(to_split.begin(), to_split.end(), delim, ' ');
 	int delim_num = count(to_split.begin(), to_split.end(), delim);
@@ -45,7 +24,6 @@ void split(std::string to_split, char delim, std::vector<std::string>& result) {
 		}
 	}
 	result.push_back(frag);
-
 }
 
 //parses a wavefront object into passed arrays
@@ -54,8 +32,6 @@ bool Parsers::parseOBJ(std::string filename, std::vector<float>& vertices, std::
 	std::vector< lm::vec2 >  unique_uvs;
 	std::vector<std::string> unique_faces, temp_face_index;
 	std::string line;
-	int tris_faces = 0;
-	int quads_faces = 0;
 	std::map<std::string, int> map;
 	int map_index = 0;
 	std::ifstream myfile("data/assets/" + filename);
@@ -65,15 +41,9 @@ bool Parsers::parseOBJ(std::string filename, std::vector<float>& vertices, std::
 		{
 			std::string text;
 			std::vector< std::string> data;
-			int spaces_no = 0;
 			split(line, ' ', data);
-			
 			std::string first = data[0];
-			int slides = data.size()-1;
-
-			//std::cout << "Talls: " << slides << " First: " << first << std::endl;
-			//std::cout << line << std::endl;
-			
+			int slides = data.size()-1;	
 			// read the first word of the line
 			if (first == "v") { //Let’s deal with the vertices first 
 				lm::vec3 vertex;
@@ -94,10 +64,8 @@ bool Parsers::parseOBJ(std::string filename, std::vector<float>& vertices, std::
 				normal.y = std::stof(data[2]);
 				normal.z = std::stof(data[3]);
 				unique_normals.push_back(normal);
-
 			}
 			else if (first == "f" && slides == 3) { //we use 3 strings for the faces
-				tris_faces = tris_faces + 3;
 				std::string fx, fy, fz;
 				fx = data[1];
 				fy = data[2];
@@ -106,7 +74,6 @@ bool Parsers::parseOBJ(std::string filename, std::vector<float>& vertices, std::
 				unique_faces.insert(unique_faces.end(), std::begin(_face), std::end(_face));
 			}
 			else if (first == "f" && slides == 4) {
-				quads_faces = quads_faces + 4;
 				std::string fx, fy, fz,fn;
 				fx = data[1];
 				fy = data[2];
@@ -117,8 +84,6 @@ bool Parsers::parseOBJ(std::string filename, std::vector<float>& vertices, std::
 				unique_faces.insert(unique_faces.end(), std::begin(_face1), std::end(_face1));
 				unique_faces.insert(unique_faces.end(), std::begin(_face2), std::end(_face2));
 			}
-				
-			
 		}
 		myfile.close();
 	}
@@ -126,7 +91,6 @@ bool Parsers::parseOBJ(std::string filename, std::vector<float>& vertices, std::
 		std::cerr << "Impossible to open the file !\n";
 		return 0;
 	}
-	int face_num = tris_faces + (quads_faces + quads_faces);
 	//Processing the data: unique_faces.size()
 	for (int i = 0; i < unique_faces.size(); i++) {
 		lm::vec3 vertex, normal;

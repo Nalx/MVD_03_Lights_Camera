@@ -45,8 +45,8 @@ void Game::init() {
     
 	//*****************************************************************CUBE TEST CREATE GEOMETRY FROM OBJ
 	
-	//int cube_geom_id = graphics_system_.createGeometryFromFile("cube.obj");
-	int cube_geom_id = graphics_system_.createGeometryFromFile("teapot_small.obj");
+	int cube_geom_id = graphics_system_.createGeometryFromFile("cube.obj");
+	//int cube_geom_id = graphics_system_.createGeometryFromFile("teapot_small.obj");
 
 	int ent_cube = ECS.createEntity("cube");
 	Mesh& cmc = ECS.createComponentForEntity<Mesh>(ent_cube);
